@@ -1,3 +1,50 @@
-/* You can add global styles to this file, and also import other style files */
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/jetbrains-mono/400.css';
 
-@import 'tailwindcss';
+@import "tailwindcss";
+
+@theme {
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-border-line: var(--border-line);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-accent-backend: var(--accent-backend);
+  --color-accent-frontend: var(--accent-frontend);
+  --color-accent-active: var(--accent-active);
+  
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+:root {
+  --bg-base: #0B0D12;
+  --bg-surface: #131720;
+  --border-line: #1F242E;
+  --text-primary: #ECEFF3;
+  --text-muted: #7A8290;
+  --accent-backend: #F5A623;
+  --accent-frontend: #8A63F4;
+  --accent-active: var(--accent-backend);
+}
+
+[data-mode="frontend"] {
+  --accent-active: var(--accent-frontend);
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display);
+}

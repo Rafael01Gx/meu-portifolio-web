@@ -1,12 +1,20 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { HeroTerminalComponent } from './components/hero-terminal/hero-terminal.component';
+import { StackExplorerComponent } from './components/stack-explorer/stack-explorer.component';
+import { ProjectsShowcaseComponent } from './components/projects-showcase/projects-showcase.component';
+import { SiteFooterComponent } from './components/site-footer/site-footer.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [
+    HeroTerminalComponent,
+    StackExplorerComponent,
+    ProjectsShowcaseComponent,
+    SiteFooterComponent
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('meu-portifolio-web');
 }
