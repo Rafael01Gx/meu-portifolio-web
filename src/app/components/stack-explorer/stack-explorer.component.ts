@@ -54,7 +54,7 @@ import { SkillsService } from '../../services/skills.service';
                [class.-translate-x-8]="activeMode() === 'terminal'"
                [class.z-0]="activeMode() === 'terminal'"
                [class.pointer-events-none]="activeMode() === 'terminal'">
-            <app-frontend-visual-graph [skills]="allSkills()"></app-frontend-visual-graph>
+            <app-frontend-visual-graph [skills]="allSkills()" [isVisible]="activeMode() === 'visual'"></app-frontend-visual-graph>
           </div>
 
           <div class="col-start-1 row-start-1 transition-all duration-500 transform w-full"

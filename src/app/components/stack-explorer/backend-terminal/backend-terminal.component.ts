@@ -9,7 +9,7 @@ import gsap from 'gsap';
   standalone: true,
   imports: [CommonModule, NgIconComponent],
   template: `
-    <div class="bg-[#11131a]/95 backdrop-blur-2xl border border-[var(--border-line)] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] h-[80vh] min-h-[650px] flex flex-col md:flex-row overflow-hidden relative w-full">
+    <div class="bg-[#11131a]/95 backdrop-blur-2xl border border-[var(--border-line)] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] h-[75vh] min-h-[500px] flex flex-col md:flex-row overflow-hidden relative w-full">
       
       <!-- Left Sidebar (File Explorer) -->
       <div class="hidden md:flex w-64 bg-black/40 border-r border-[var(--border-line)]/50 flex-col z-20">
@@ -47,14 +47,6 @@ import gsap from 'gsap';
       <!-- Main Area (Canvas + Terminal) -->
       <div class="flex-1 flex flex-col h-full w-full z-10">
         
-        <!-- Code Editor Header -->
-        <div class="flex items-center px-4 py-3 bg-[#1a1d27]/80 backdrop-blur-md border-b border-[var(--border-line)]/50 overflow-x-auto shrink-0">
-          <div class="flex items-center gap-2 px-3 py-1 bg-black/40 text-[var(--accent-frontend)] text-sm rounded-md border border-[var(--border-line)]/30">
-            <ng-icon name="lucideFileCode" size="16"></ng-icon>
-            architecture.drawio
-            <ng-icon name="lucideX" size="14" class="ml-2 cursor-pointer hover:text-red-400"></ng-icon>
-          </div>
-        </div>
 
         <!-- Top Canvas (Simulation Visuals) -->
         <div #canvasViewport 
@@ -116,7 +108,7 @@ import gsap from 'gsap';
                   [attr.x2]="getEdgeCoords(edge).x2" 
                   [attr.y2]="getEdgeCoords(edge).y2" 
                   stroke="#1a1a2e"
-                  stroke-width="1" 
+                  stroke-width="0.5" 
                   opacity="0.4" />
               }
               
@@ -135,7 +127,7 @@ import gsap from 'gsap';
                   }"
                   [style.color]="edge.protocol === 'http' ? '#DD0031' : edge.protocol === 'amqp' ? '#FF6600' : '#4169E1'"
                   class="transition-all duration-500"
-                  stroke-width="1.5" />
+                  stroke-width="0.75" />
               }
             </svg>
 
@@ -159,7 +151,8 @@ import gsap from 'gsap';
                        [ngClass]="{
                          'node-frontend': node.type === 'frontend',
                          'node-backend': node.type === 'backend',
-                         'node-database': node.type === 'database',
+                         'node-database': node.type === 'database' && !node.id.includes('mongo'),
+                         'node-mongo': node.id.includes('mongo'),
                          'node-messaging': node.type === 'messaging',
                          'node-microservice': node.type === 'microservice',
                          'node-ai': node.type === 'ai',
@@ -327,6 +320,7 @@ import gsap from 'gsap';
     .node-frontend { color: #DD0031; filter: drop-shadow(0 0 10px rgba(221,0,49,0.15)); }
     .node-backend  { color: #6DB33F; filter: drop-shadow(0 0 10px rgba(109,179,63,0.15)); }
     .node-database { color: #4169E1; filter: drop-shadow(0 0 10px rgba(65,105,225,0.15)); }
+    .node-mongo    { color: #47A248; filter: drop-shadow(0 0 10px rgba(71,162,72,0.15)); }
     .node-messaging { color: #FF6600; filter: drop-shadow(0 0 10px rgba(255,102,0,0.15)); }
     .node-microservice { color: #8a63f4; filter: drop-shadow(0 0 10px rgba(138,99,244,0.15)); }
     .node-ai { color: #00E5FF; filter: drop-shadow(0 0 10px rgba(0,229,255,0.15)); }
@@ -520,111 +514,169 @@ export class BackendTerminalComponent {
   }
 
   private getEdgeProtocol(id1: string, id2: string): 'http' | 'amqp' | 'tcp' {
-    const edge = this.simulator.activeEdges().find(e => 
-      (e.sourceId === id1 && e.targetId === id2) || 
+    const edge = this.simulator.activeEdges().find(e =>
+      (e.sourceId === id1 && e.targetId === id2) ||
       (e.sourceId === id2 && e.targetId === id1)
     );
     return edge?.protocol || 'http';
   }
 
   private runPingAnimation() {
-    const payload = this.pingPayload?.nativeElement;
-    if (!payload) return;
+    const payloadTemplate = this.pingPayload?.nativeElement;
+    if (!payloadTemplate) return;
 
     const angularNode = this.getNode('angular');
     const nginxNode = this.getNode('nginx');
     const springNode = this.getNode('spring-boot');
     const dbNode = this.getNode('postgresql') || this.getNode('mongodb');
-    const mqNode = this.getNode('rabbitmq');
+    const mqNode = this.getNode('rabbitmq') || this.getNode('kafka');
 
     if (!angularNode || !springNode) return;
 
-    // Build timeline sequence
+    // We'll create a factory for temporary payload elements
+    const createPayload = () => {
+      const clone = payloadTemplate.cloneNode(true) as HTMLElement;
+      if (payloadTemplate.parentElement) {
+        payloadTemplate.parentElement.appendChild(clone);
+      }
+      clone.style.display = 'flex';
+      clone.style.opacity = '1';
+      return clone;
+    };
+
+    const removePayload = (el: HTMLElement) => {
+      if (el && el.parentElement) {
+        el.parentElement.removeChild(el);
+      }
+    };
+
+    const mainPayload = createPayload();
     const tl = gsap.timeline();
 
-    // Set initial position using CSS left/top instead of SVG attributes
-    gsap.set(payload, {
+    gsap.set(mainPayload, {
       left: this.getColPercent(angularNode.col),
       top: this.getRowPercent(angularNode.row),
-      display: 'flex',
-      opacity: 1
     });
 
-    // Helper function to animate to a node and bump it
-    const routeTo = (sourceNode: any, targetNode: any) => {
-      tl.to(payload, {
+    const setPayloadIcon = (el: HTMLElement, protocol: string) => {
+      const iconSpan = el.querySelector('ng-icon');
+      const innerWrapper = el.querySelector('.relative.z-10') as HTMLElement;
+      const outerAura = el.querySelector('.animate-ping') as HTMLElement;
+
+      let colorClass = 'text-[#DD0031]'; // http
+      if (protocol === 'tcp') colorClass = 'text-[#4169E1]';
+      else if (protocol === 'amqp') colorClass = 'text-[#FF6600]';
+
+      // We'd ideally change the SVG inside ng-icon but for raw DOM cloning,
+      // it's easier to just change the color which is the main visual cue.
+      if (innerWrapper) {
+        innerWrapper.className = `relative z-10 flex items-center justify-center rounded-full bg-[#0a0c14] p-1.5 border shadow-[0_0_20px_currentColor,0_0_40px_currentColor] transition-colors duration-300 ${colorClass}`;
+      }
+      if (outerAura) {
+        outerAura.className = `absolute inset-[-4px] rounded-full animate-ping opacity-30 bg-current ${colorClass}`;
+      }
+    };
+
+    const routeTo = (timeline: gsap.core.Timeline, el: HTMLElement, sourceNode: any, targetNode: any, pos?: string | number) => {
+      timeline.to(el, {
         left: this.getColPercent(targetNode.col),
         top: this.getRowPercent(targetNode.row),
-        duration: 0.7,
+        duration: 0.6,
         ease: 'power2.inOut',
         onStart: () => {
-          const protocol = this.getEdgeProtocol(sourceNode.id, targetNode.id);
-          if (protocol === 'http') {
-             this.payloadIcon.set('lucideGlobe');
-             this.payloadColor.set('text-[#DD0031]');
-          } else if (protocol === 'tcp') {
-             this.payloadIcon.set('lucideDatabase');
-             this.payloadColor.set('text-[#4169E1]');
-          } else if (protocol === 'amqp') {
-             this.payloadIcon.set('lucideMail');
-             this.payloadColor.set('text-[#FF6600]');
-          }
+          setPayloadIcon(el, this.getEdgeProtocol(sourceNode.id, targetNode.id));
         },
         onComplete: () => {
-          gsap.fromTo('#node-' + targetNode.id, 
-            { scale: 1, filter: 'brightness(1)' }, 
+          gsap.fromTo('#node-' + targetNode.id,
+            { scale: 1, filter: 'brightness(1)' },
             { scale: 1.15, filter: 'brightness(1.5)', duration: 0.15, yoyo: true, repeat: 1, ease: 'power1.inOut' }
           );
         }
-      });
+      }, pos);
     };
 
     const route = [];
     if (nginxNode) route.push(nginxNode);
     route.push(springNode);
+    if (dbNode && !mqNode) route.push(dbNode); // Only hit core DB if no MQ, otherwise go to MQ
 
-    if (dbNode) route.push(dbNode);
-    else if (mqNode) route.push(mqNode);
-
-    const dynamicServices = this.simulator.activeNodes().filter(n => n.type === 'microservice');
-
-    // Forward
     let current = angularNode;
     route.forEach(node => {
-      routeTo(current, node);
+      routeTo(tl, mainPayload, current, node);
       current = node;
     });
 
-    // Fan-out to dynamic services from RabbitMQ
-    if (mqNode && current.id === mqNode.id) {
-       dynamicServices.forEach(srv => {
-          routeTo(mqNode, srv);
-          
-          const srvEdges = this.simulator.activeEdges().filter(e => e.sourceId === srv.id && e.protocol === 'tcp');
-          srvEdges.forEach(e => {
-             const srvDb = this.getNode(e.targetId);
-             if (srvDb) {
-                routeTo(srv, srvDb);
-                routeTo(srvDb, srv);
-             }
-          });
-          
-          routeTo(srv, mqNode);
-       });
+    if (mqNode) {
+      // Go to MQ
+      routeTo(tl, mainPayload, current, mqNode);
+      current = mqNode;
+
+      // FAN-OUT CONCURRENTLY
+      const dynamicServices = this.simulator.activeNodes().filter(n => n.type === 'microservice');
+
+      tl.add('fanOutStart'); // Label for concurrent start
+
+      const serviceClones: HTMLElement[] = [];
+
+      dynamicServices.forEach((srv, index) => {
+        const srvPayload = createPayload();
+        serviceClones.push(srvPayload);
+        gsap.set(srvPayload, {
+          left: this.getColPercent(mqNode.col),
+          top: this.getRowPercent(mqNode.row),
+        });
+
+        // Move from MQ to Service (all start at 'fanOutStart')
+        routeTo(tl, srvPayload, mqNode, srv, 'fanOutStart');
+
+        // Check if service has database
+        const srvEdges = this.simulator.activeEdges().filter(e => e.sourceId === srv.id && e.protocol === 'tcp');
+        if (srvEdges.length > 0) {
+          const srvDb = this.getNode(srvEdges[0].targetId);
+          if (srvDb) {
+            routeTo(tl, srvPayload, srv, srvDb, 'fanOutStart+=0.6');
+            routeTo(tl, srvPayload, srvDb, srv, 'fanOutStart+=1.2');
+            routeTo(tl, srvPayload, srv, mqNode, 'fanOutStart+=1.8');
+          } else {
+            routeTo(tl, srvPayload, srv, mqNode, 'fanOutStart+=1.2');
+          }
+        } else {
+          routeTo(tl, srvPayload, srv, mqNode, 'fanOutStart+=0.6');
+        }
+      });
+
+      // Wait for all fan-outs to finish before moving the main payload backward
+      const maxFanOutTime = dynamicServices.length > 0 ? (dynamicServices.some(s => this.simulator.activeEdges().some(e => e.sourceId === s.id && e.protocol === 'tcp')) ? 2.4 : 1.2) : 0;
+
+      tl.add('fanOutEnd', `fanOutStart+=${maxFanOutTime}`);
+
+      // Cleanup service clones
+      tl.call(() => {
+        serviceClones.forEach(clone => removePayload(clone));
+      }, [], 'fanOutEnd');
+
+      // Now route the main payload back from MQ to Spring
+      routeTo(tl, mainPayload, mqNode, springNode, 'fanOutEnd');
+      current = springNode;
+    } else if (dbNode) {
+      // Reverse from DB if no MQ
+      routeTo(tl, mainPayload, dbNode, springNode);
+      current = springNode;
     }
 
-    // Backward
-    [...route].reverse().forEach(node => {
-      routeTo(current, node);
+    // Backward path to Angular
+    const backRoute = [];
+    if (nginxNode) backRoute.push(nginxNode);
+    backRoute.push(angularNode);
+
+    backRoute.forEach(node => {
+      routeTo(tl, mainPayload, current, node);
       current = node;
     });
 
-    routeTo(current, angularNode);
-
-    // Hide at end
-    tl.to(payload, {
+    tl.to(mainPayload, {
       opacity: 0, duration: 0.3, onComplete: () => {
-        gsap.set(payload, { display: 'none' });
+        removePayload(mainPayload);
       }
     });
   }

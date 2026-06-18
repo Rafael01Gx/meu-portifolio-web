@@ -41,7 +41,7 @@ import gsap from 'gsap';
       <!-- Skill Nodes Container -->
       <div #graphContainer class="absolute inset-0 w-full h-full z-20">
         @for (skill of skills; track skill.name; let i = $index) {
-          <div class="skill-node absolute cursor-pointer group" 
+          <div class="skill-node absolute cursor-pointer group hover:z-[60]" 
                [style.left]="nodePositions[i]?.x + '%'" 
                [style.top]="nodePositions[i]?.y + '%'"
                [style.transform]="'translate(-50%, -50%)'">
@@ -75,22 +75,27 @@ import gsap from 'gsap';
 })
 export class FrontendVisualGraphComponent implements OnChanges {
   @Input() skills: Skill[] = [];
+  @Input() isVisible: boolean = false;
   @ViewChild('graphContainer') graphContainer!: ElementRef;
   @ViewChild('sweeper') sweeper!: ElementRef;
   
   nodePositions: {x: number, y: number}[] = [];
+  private hasAnimated = false;
   
   private destroyRef = inject(DestroyRef);
 
-  constructor() {
-    afterNextRender(() => {
-      this.initAnimations();
-    });
-  }
+  constructor() {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['skills']) {
       this.calculatePositions();
+    }
+    
+    if (changes['isVisible'] && this.isVisible && !this.hasAnimated) {
+      this.hasAnimated = true;
+      setTimeout(() => {
+        this.initAnimations();
+      }, 100);
     }
   }
 
