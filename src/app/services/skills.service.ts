@@ -11,7 +11,7 @@ export class SkillsService {
   private frontendSignal = signal<Skill[]>(FRONTEND_SKILLS);
 
   // State for Stack Explorer toggle
-  private activeModeSignal = signal<'visual' | 'terminal'>('terminal');
+  private activeModeSignal = signal<'visual' | 'terminal'>('visual');
   activeMode = this.activeModeSignal.asReadonly();
 
   toggleMode() {

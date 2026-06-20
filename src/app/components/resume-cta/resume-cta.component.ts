@@ -177,8 +177,6 @@ export class ResumeCta implements OnDestroy {
   @ViewChild('heading') heading!: ElementRef;
   @ViewChild('subtext') subtext!: ElementRef;
   @ViewChild('buttons') buttons!: ElementRef;
-  @ViewChild('divider') divider!: ElementRef;
-  @ViewChild('socials') socials!: ElementRef;
 
   constructor() {
     afterNextRender(() => {
@@ -192,21 +190,20 @@ export class ResumeCta implements OnDestroy {
 
   runEntrance() {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    tl.to(this.statusBadge.nativeElement, { opacity: 1, y: 0, duration: 0.6, from: { y: 20 } })
-      .to(this.heading.nativeElement, { opacity: 1, y: 0, duration: 0.8 }, '-=0.3')
-      .to(this.subtext.nativeElement, { opacity: 1, y: 0, duration: 0.7 }, '-=0.5')
-      .to(this.buttons.nativeElement, { opacity: 1, y: 0, duration: 0.6, ease: 'back.out(1.2)' }, '-=0.4')
-      .to(this.divider.nativeElement, { opacity: 1, duration: 0.5 }, '-=0.2')
-      .to(this.socials.nativeElement, { opacity: 1, y: 0, duration: 0.5 }, '-=0.2');
-
+    
     // Set initial Y states before animating
     gsap.set([
       this.statusBadge.nativeElement,
       this.heading.nativeElement,
       this.subtext.nativeElement,
-      this.buttons.nativeElement,
-      this.socials.nativeElement,
+      this.buttons.nativeElement
     ], { y: 30 });
+    
+    tl.to(this.statusBadge.nativeElement, { opacity: 1, y: 0, duration: 0.6 })
+      .to(this.heading.nativeElement, { opacity: 1, y: 0, duration: 0.8 }, '-=0.3')
+      .to(this.subtext.nativeElement, { opacity: 1, y: 0, duration: 0.7 }, '-=0.5')
+      .to(this.buttons.nativeElement, { opacity: 1, y: 0, duration: 0.6, ease: 'back.out(1.2)' }, '-=0.4');
+
     tl.restart();
   }
 

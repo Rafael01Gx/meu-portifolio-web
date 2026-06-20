@@ -1,4 +1,5 @@
-import { Component, Input, ViewChild, ElementRef, afterNextRender, inject, DestroyRef, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, afterNextRender, inject, DestroyRef, OnChanges, SimpleChanges, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { NgIconComponent } from '@ng-icons/core';
 import { Skill } from '../../../models/skill.model';
@@ -83,6 +84,7 @@ export class FrontendVisualGraphComponent implements OnChanges {
   private hasAnimated = false;
   
   private destroyRef = inject(DestroyRef);
+  private platformId = inject(PLATFORM_ID);
 
   constructor() {}
 
@@ -92,9 +94,12 @@ export class FrontendVisualGraphComponent implements OnChanges {
     }
     
     if (changes['isVisible'] && this.isVisible && !this.hasAnimated) {
+      if (!isPlatformBrowser(this.platformId)) return;
       this.hasAnimated = true;
+      const ctx = gsap.context(() => {});
+      this.destroyRef.onDestroy(() => ctx.revert());
       setTimeout(() => {
-        this.initAnimations();
+        this.initAnimations(ctx);
       }, 100);
     }
   }
@@ -122,8 +127,8 @@ export class FrontendVisualGraphComponent implements OnChanges {
     });
   }
 
-  initAnimations() {
-    const ctx = gsap.context(() => {
+  initAnimations(ctx: gsap.Context) {
+    ctx.add(() => {
       // Sweeper Animation
       if (this.sweeper) {
         gsap.to(this.sweeper.nativeElement, {
@@ -148,7 +153,6 @@ export class FrontendVisualGraphComponent implements OnChanges {
             delay: i * 0.05
           });
 
-          // Small subtle pulsing for nodes
           gsap.to(node, {
             y: "+=5",
             duration: "random(1.5, 3)",
@@ -159,10 +163,6 @@ export class FrontendVisualGraphComponent implements OnChanges {
           });
         });
       }
-    });
-
-    this.destroyRef.onDestroy(() => {
-      ctx.revert();
     });
   }
 }
