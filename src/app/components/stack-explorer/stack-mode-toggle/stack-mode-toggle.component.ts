@@ -16,7 +16,7 @@ import { CommonModule } from '@angular/common';
       
       <button 
         (click)="toggle.emit()"
-        class="focus:outline-none focus:ring-2 focus:ring-[var(--accent-active)] rounded-full transition-colors text-[var(--text-primary)] hover:text-[var(--accent-active)]"
+        class="focus:outline-none  rounded-full transition-colors text-[var(--text-primary)] hover:text-[var(--accent-active)]"
         [attr.aria-label]="'Alternar para modo ' + (mode() === 'visual' ? 'terminal' : 'visual')">
         <ng-icon 
           [name]="mode() === 'visual' ? 'lucideToggleLeft' : 'lucideToggleRight'" 

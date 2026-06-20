@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, inject, signal, effect } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, signal, effect, afterNextRender, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIconComponent } from '@ng-icons/core';
 import { ArchitectureSimulatorService, ArchitectureNode } from '../../../services/architecture-simulator.service';
@@ -168,6 +168,17 @@ import gsap from 'gsap';
               }
             </div>
           </div>
+
+          <!-- Animated Terminal Hint Overlay (Moved to IDE bottom right) -->
+          @if (currentInput() === '') {
+            <div class="absolute bottom-4 right-4 pointer-events-none flex flex-col items-end z-30 transition-opacity duration-300">
+              <div class="bg-[var(--accent-backend)]/10 border border-[var(--accent-backend)]/30 backdrop-blur-sm px-3 py-2 rounded shadow-[0_0_15px_rgba(109,179,63,0.15)] flex items-center gap-2">
+                <ng-icon name="lucideTerminal" size="14" class="text-[var(--accent-backend)] animate-pulse"></ng-icon>
+                <span class="text-xs text-[#ABB2BF] font-mono">{{ currentHint() }}</span>
+                <span class="w-1.5 h-3 bg-[var(--accent-backend)] animate-pulse inline-block"></span>
+              </div>
+            </div>
+          }
         </div>
 
         <!-- Bottom Terminal -->
@@ -193,7 +204,7 @@ import gsap from 'gsap';
             }
           </div>
 
-          <div class="flex items-center text-[#6DB33F] mt-auto pt-2 shrink-0">
+          <div class="flex items-center text-[#6DB33F] mt-auto pt-2 shrink-0 relative">
             <span class="mr-2 hidden md:inline">rafael@devops:~/portfolio$</span>
             <span class="mr-2 md:hidden">~$</span>
             <input 
@@ -203,8 +214,8 @@ import gsap from 'gsap';
               (input)="currentInput.set(commandInput.value)"
               (keydown.enter)="executeCommand()"
               (keydown.tab)="handleTab($event)"
-              class="flex-1 bg-transparent outline-none border-none text-[#ABB2BF] font-bold placeholder-[var(--text-muted)]"
-              placeholder="Digite um comando (ex: help) e aperte TAB para autocomplete"
+              class="flex-1 bg-transparent outline-none border-none text-[#ABB2BF] font-bold placeholder-[var(--text-muted)]/30 transition-all focus:placeholder-transparent"
+              placeholder="Digite um comando (ex: help)..."
               autocomplete="off"
               spellcheck="false">
           </div>
@@ -367,10 +378,22 @@ export class BackendTerminalComponent {
   canvasPanX = signal(0);
   canvasPanY = signal(0);
   private isPanning = false;
-  private panStartX = 0;
-  private panStartY = 0;
-  private panOriginX = 0;
-  private panOriginY = 0;
+  panStartX = 0; panStartY = 0;
+  panOriginX = 0; panOriginY = 0;
+
+  // Animated Hints State
+  currentHint = signal<string>('');
+  private hints = [
+    'Interaja com o terminal para criar arquiteturas dinâmicas!',
+    'Tente limpar a tela com o comando: clear',
+    'Crie um microsserviço: add service ms-auth',
+    'Acople um banco de dados: add database postgres db-auth ms-auth',
+    'Dispare o fluxo de dados: teste',
+    'Restaure a arquitetura enterprise: deploy all'
+  ];
+  private hintIndex = 0;
+  private typewriterInterval: any;
+  private hintLoopInterval: any;
 
   @ViewChild('commandInput') commandInput!: ElementRef<HTMLInputElement>;
   @ViewChild('svgLayer') svgLayer!: ElementRef<SVGSVGElement>;
@@ -379,6 +402,17 @@ export class BackendTerminalComponent {
   @ViewChild('pingPayload') pingPayload!: ElementRef<HTMLDivElement>;
 
   constructor() {
+    afterNextRender(() => {
+      // Start the first hint immediately
+      this.typewriterEffect(this.hints[this.hintIndex]);
+      
+      // Loop the hints every 6 seconds
+      this.hintLoopInterval = setInterval(() => {
+        this.hintIndex = (this.hintIndex + 1) % this.hints.length;
+        this.typewriterEffect(this.hints[this.hintIndex]);
+      }, 6000);
+    });
+
     effect(() => {
       const pingCount = this.simulator.triggerPing();
       if (pingCount > 0) {
@@ -416,6 +450,23 @@ export class BackendTerminalComponent {
 
   getNode(id: string): ArchitectureNode | undefined {
     return this.simulator.activeNodes().find(n => n.id === id);
+  }
+
+  private typewriterEffect(text: string) {
+    let i = 0;
+    this.currentHint.set('');
+    if (this.typewriterInterval) clearInterval(this.typewriterInterval);
+    
+    this.typewriterInterval = setInterval(() => {
+      this.currentHint.update(val => val + text.charAt(i));
+      i++;
+      if (i >= text.length) clearInterval(this.typewriterInterval);
+    }, 45); // Typing speed
+  }
+
+  ngOnDestroy() {
+    if (this.typewriterInterval) clearInterval(this.typewriterInterval);
+    if (this.hintLoopInterval) clearInterval(this.hintLoopInterval);
   }
 
   private colNum(col?: number): number {
@@ -508,7 +559,7 @@ export class BackendTerminalComponent {
 
   private scrollToBottom() {
     setTimeout(() => {
-      const terminal = this.commandInput.nativeElement.closest('.h-64, .h-80')?.querySelector('.overflow-y-auto');
+      const terminal = this.commandInput.nativeElement.closest('.h-48, .md\\:h-56')?.querySelector('.overflow-y-auto');
       if (terminal) terminal.scrollTop = terminal.scrollHeight;
     }, 10);
   }

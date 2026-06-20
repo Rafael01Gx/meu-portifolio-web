@@ -85,11 +85,19 @@ export class ArchitectureSimulatorService {
   private initialHelp = [
     'E-Commerce Microservices Platform v2.0',
     '─────────────────────────────────────',
-    '  add service <nome>                      -> Adiciona um novo microsserviço',
-    '  add database <tipo> <db> <target>       -> Adiciona banco (ex: add database postgres db-x ms-x)',
-    '  deploy all                              -> Restaura a arquitetura completa',
+    '  ng new web-app                          -> Inicia o Frontend Angular',
+    '  docker run nginx                        -> Inicia o API Gateway (NGINX)',
+    '  ./mvnw spring-boot:run                  -> Inicia o Order Orchestrator (Spring Boot)',
+    '  docker run postgres                     -> Inicia o Banco Relacional Principal',
+    '  docker run mongodb                      -> Inicia o Banco NoSQL (Catálogo)',
+    '  docker run rabbitmq                     -> Inicia o Event Bus (RabbitMQ/Kafka)',
+    '  add ai-module langchain4j               -> Acopla IA ao Spring Boot',
+    '  add service <nome>                      -> Adiciona um novo microsserviço dinâmico',
+    '  add database <tipo> <db> <target>       -> Acopla um DB a um microserviço (ex: add database postgres db-x ms-x)',
+    '  deploy all                              -> Restaura a arquitetura enterprise completa',
     '  teste                                   -> Dispara teste de carga end-to-end',
-    '  clear                                   -> Limpa a arquitetura e recomeça'
+    '  clear                                   -> Limpa a arquitetura e recomeça',
+    '  help                                    -> Exibe este menu de ajuda'
   ].join('\n');
 
   private terminalHistorySignal = signal<TerminalOutput[]>([

@@ -42,7 +42,8 @@ import {
   lucideFolder,
   lucideFolderOpen,
   lucideFileText,
-  lucideGlobe
+  lucideGlobe,
+  lucideDownload
 } from '@ng-icons/lucide';
 
 export const appIcons = {
@@ -86,5 +87,6 @@ export const appIcons = {
   lucideFolder,
   lucideFolderOpen,
   lucideFileText,
-  lucideGlobe
+  lucideGlobe,
+  lucideDownload
 };

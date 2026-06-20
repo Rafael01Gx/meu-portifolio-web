@@ -3,6 +3,7 @@ import { HeroTerminalComponent } from './components/hero-terminal/hero-terminal.
 import { StackExplorerComponent } from './components/stack-explorer/stack-explorer.component';
 import { ProjectsShowcaseComponent } from './components/projects-showcase/projects-showcase.component';
 import { SiteFooterComponent } from './components/site-footer/site-footer.component';
+import { ResumeCta } from './components/resume-cta/resume-cta.component';
 
 @Component({
   selector: 'app-root',
@@ -11,6 +12,7 @@ import { SiteFooterComponent } from './components/site-footer/site-footer.compon
     HeroTerminalComponent,
     StackExplorerComponent,
     ProjectsShowcaseComponent,
+    ResumeCta,
     SiteFooterComponent
   ],
   templateUrl: './app.html',

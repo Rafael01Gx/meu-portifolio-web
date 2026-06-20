@@ -24,7 +24,7 @@ import { SkillsService } from '../../services/skills.service';
       <!-- Bottom Fade Overlay to blend into next section -->
       <div class="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-[var(--bg-base)] to-transparent z-0 pointer-events-none opacity-95"></div>
 
-      <div class="w-full max-w-6xl mx-auto flex-1 flex flex-col relative z-10">
+      <div class="w-full max-w-7xl mx-auto flex-1 flex flex-col relative z-10">
         
         <div class="mb-12 text-center">
           <h2 class="text-3xl md:text-5xl font-display font-bold mb-4">
@@ -88,9 +88,9 @@ import { SkillsService } from '../../services/skills.service';
 })
 export class StackExplorerComponent {
   private skillsService = inject(SkillsService);
-  
+
   activeMode = this.skillsService.activeMode;
-  
+
   // Combine both frontend and backend skills into a single array for the visual mode
   allSkills = computed(() => {
     return [...this.skillsService.frontendSkills(), ...this.skillsService.backendSkills()];
